@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chia sẻ vị trí</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #status {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            display: block !important;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block !important;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            display: block !important;
+        }
+        .map-link {
+            display: inline-block;
+            margin-top: 15px;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .info {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📍</div>
+        <h1>Chia sẻ vị trí của bạn</h1>
+        <p>Để tiếp tục, chúng tôi cần biết vị trí hiện tại của bạn.<br>Vui lòng nhấn nút bên dưới và <strong>cho phép truy cập vị trí</strong>.</p>
+        
+        <div class="info">
+            ℹ️ Thông tin vị trí của bạn sẽ được gửi đến quản trị viên.
+        </div>
+        
+        <button class="btn" id="locateBtn" onclick="getLocation()">
+            📡 Tôi đồng ý chia sẻ vị trí
+        </button>
+        
+        <div id="status"></div>
+        <div id="mapArea"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 👇 THAY LINK CỦA BẠN VÀO ĐÂY 👇
+        // ==========================================
+        const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbypdAsJNs-yMRNi2PdnGjZqmy6N0EeyoHOpPB-UbWGeePtcFxwZTd7NNxwlXjzAF_63xQ/exec";
+        // ==========================================
+
+        function getLocation() {
+            const statusDiv = document.getElementById('status');
+            const btn = document.getElementById('locateBtn');
+            
+            // Kiểm tra trình duyệt có hỗ trợ không
+            if (!navigator.geolocation) {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = '❌ Trình duyệt của bạn không hỗ trợ định vị. Vui lòng dùng Chrome, Firefox hoặc Safari.';
+                return;
+            }
+            
+            // Hiển thị trạng thái đang tải
+            statusDiv.className = 'loading';
+            statusDiv.innerHTML = '⏳ Đang lấy vị trí của bạn... Vui lòng chờ.';
+            btn.disabled = true;
+            btn.textContent = 'Đang xử lý...';
+            
+            // Yêu cầu vị trí
+            navigator.geolocation.getCurrentPosition(
+                // === THÀNH CÔNG ===
+                function(position) {
+                    const data = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: Math.round(position.coords.accuracy),
+                        timestamp: new Date().toLocaleString("vi-VN")
+                    };
+                    
+                    statusDiv.className = 'success';
+                    statusDiv.innerHTML = `
+                        ✅ Đã lấy vị trí thành công!<br>
+                        <small>Vĩ độ: ${data.latitude} | Kinh độ: ${data.longitude}</small><br>
+                        <small>Độ chính xác: ${data.accuracy}m</small>
+                    `;
+                    
+                    // Hiển thị link Google Maps
+                    const mapLink = `https://www.google.com/maps?q=${data.latitude},${data.longitude}`;
+                    document.getElementById('mapArea').innerHTML = `
+                        <a href="${mapLink}" target="_blank" class="map-link">🔍 Xem vị trí trên Google Maps</a>
+                    `;
+                    
+                    btn.textContent = '✅ Đã chia sẻ';
+                    
+                    // GỬI DỮ LIỆU ĐI
+                    sendLocation(data);
+                },
+                
+                // === LỖI ===
+                function(error) {
+                    statusDiv.className = 'error';
+                    let message = '';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message = '❌ Bạn đã <strong>từ chối</strong> chia sẻ vị trí.<br>Vui lòng cho phép để tiếp tục.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message = '❌ Không thể lấy thông tin vị trí.<br>Kiểm tra GPS/Wifi của bạn.';
+                            break;
+                        case error.TIMEOUT:
+                            message = '❌ Yêu cầu quá thời gian.<br>Vui lòng thử lại.';
+                            break;
+                        default:
+                            message = '❌ Có lỗi không xác định. Vui lòng thử lại.';
+                    }
+                    
+                    statusDiv.innerHTML = message;
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Thử lại';
+                },
+                
+                // === TÙY CHỌN ===
+                {
+                    enableHighAccuracy: true,  // Độ chính xác cao (dùng GPS)
+                    timeout: 15000,             // Timeout 15 giây
+                    maximumAge: 0               // Luôn lấy vị trí mới nhất
+                }
+            );
+        }
+        
+        function sendLocation(data) {
+            console.log('Đang gửi dữ liệu:', data);
+            
+            fetch(WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',  // Quan trọng: tránh lỗi CORS
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                console.log('✅ Đã gửi thành công!');
+                // Có thể thêm thông báo nếu muốn
+            })
+            .catch((error) => {
+                console.error('❌ Lỗi gửi dữ liệu:', error);
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML += '<br><small style="color:orange;">⚠️ Gửi email có thể bị lỗi, nhưng vị trí đã hiển thị ở trên.</small>';
+            });
+        }
+    </script>
+</body>
+</html>
